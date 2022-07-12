@@ -1,4 +1,5 @@
 import 'package:english_words/english_words.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -35,7 +36,6 @@ class _RandomWordsState extends State<RandomWords> {
   final _saved = <WordPair>{};
   final _biggerFont = const TextStyle(fontSize: 18);
 
-  //salva os favoritos na outra aba
   void _pushSaved() {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -93,26 +93,46 @@ class _RandomWordsState extends State<RandomWords> {
 
           final alreadySaved = _saved.contains(_suggestions[index]);
           return ListTile(
-            title: Text(
-              _suggestions[index].asPascalCase,
-              style: _biggerFont,
-            ),
-            trailing: Icon(
-              alreadySaved ? Icons.favorite : Icons.favorite_border,
-              color:
-                  alreadySaved ? const Color.fromARGB(255, 255, 115, 0) : null,
-              semanticLabel: alreadySaved ? 'Remove from saved' : 'Save',
-            ),
-            onTap: () {
-              setState(() {
-                if (alreadySaved) {
-                  _saved.remove(_suggestions[index]);
-                } else {
-                  _saved.add(_suggestions[index]);
-                }
-              });
-            },
-          );
+              title: Text(
+                _suggestions[index].asPascalCase,
+                style: _biggerFont,
+              ),
+              trailing: Wrap(
+                children: <Widget>[
+                  IconButton(
+                    icon: Icon(
+                      alreadySaved ? Icons.favorite : Icons.favorite_border,
+                      color: alreadySaved
+                          ? const Color.fromARGB(255, 255, 115, 0)
+                          : null,
+                      semanticLabel: alreadySaved ? 'Desfavoritar' : 'Salvo',
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        if (alreadySaved) {
+                          _saved.remove(_suggestions[index]);
+                        } else {
+                          _saved.add(_suggestions[index]);
+                        }
+                      });
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(
+                      CupertinoIcons.delete,
+                      semanticLabel: 'Removido',
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        if (alreadySaved) {
+                          _saved.remove(_suggestions[index]);
+                        }
+                        _suggestions.remove(_suggestions[index]);
+                      });
+                    },
+                  ),
+                ],
+              ));
         },
       ),
     );
