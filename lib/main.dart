@@ -10,9 +10,15 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       title: 'Startup Name Generetor',
-      home: RandomWords(),
+      theme: ThemeData(
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.orange,
+        ),
+      ),
+      home: const RandomWords(),
     );
   }
 }
@@ -27,37 +33,114 @@ class RandomWords extends StatefulWidget {
 class _RandomWordsState extends State<RandomWords> {
   final _suggestions = <WordPair>[];
   final _biggerFont = const TextStyle(fontSize: 18.0);
+  final _saved = <WordPair>{};
+  bool _viewList = true;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Startup Name Generator'),
+        actions: [
+          IconButton(
+            onPressed: _pushsaved,
+            icon: const Icon(Icons.favorite),
+            tooltip: 'Sugestões salvas',
+          ),
+        ],
+        leading: IconButton(
+          onPressed: () {
+            setState(() {
+              _viewList ? _viewList = false : _viewList = true;
+            });
+          },
+          icon: Icon(_viewList ? Icons.grid_view : Icons.list),
+          tooltip: 'alterar visualização',
+        ),
       ),
       body: _buildSuggestions(),
     );
   }
 
-  Widget _buildSuggestions() {
-    return ListView.builder(
-      padding: const EdgeInsets.all(16.0),
-      itemBuilder: (context, i) {
-        if (i.isOdd) return const Divider();
+  void _pushsaved() {
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: (context) {
+      final tiles = _saved.map((pair) {
+        return ListTile(
+          title: Text(
+            pair.asPascalCase,
+            style: _biggerFont,
+          ),
+        );
+      });
+      final divided = tiles.isNotEmpty
+          ? ListTile.divideTiles(
+              context: context,
+              tiles: tiles,
+            ).toList()
+          : <Widget>[];
 
-        final index = i ~/ 2;
-        if (index >= _suggestions.length) {
-          _suggestions.addAll(generateWordPairs().take(10));
-        }
-        return _buildRow(_suggestions[index]);
-      },
-    );
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Sugestões salvas'),
+        ),
+        body: ListView(children: divided),
+      );
+    }));
+  }
+
+  Widget _buildSuggestions() {
+    if (_viewList) {
+      return ListView.builder(
+        padding: const EdgeInsets.all(16.0),
+        itemBuilder: (context, i) {
+          if (i.isOdd) return const Divider();
+
+          final index = i ~/ 2;
+          if (index >= _suggestions.length) {
+            _suggestions.addAll(generateWordPairs().take(10));
+          }
+          return _buildRow(_suggestions[index]);
+        },
+      );
+    } else {
+      return GridView.builder(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          childAspectRatio: 4,
+          crossAxisCount: 2,
+          crossAxisSpacing: 8.0,
+          mainAxisSpacing: 8.0,
+        ),
+        itemBuilder: (context, i) {
+          if (i >= _suggestions.length) {
+            _suggestions.addAll(generateWordPairs().take(10));
+          }
+          return Card(child: _buildRow(_suggestions[i]));
+        },
+      );
+    }
   }
 
   Widget _buildRow(WordPair pair) {
+    final alreadySaved = _saved.contains(pair);
     return ListTile(
-        title: Text(
-      pair.asPascalCase,
-      style: _biggerFont,
-    ));
+      title: Text(
+        pair.asPascalCase,
+        style: _biggerFont,
+      ),
+      trailing: Icon(
+        alreadySaved ? Icons.favorite : Icons.favorite_border,
+        color: alreadySaved ? Colors.red : null,
+        semanticLabel: alreadySaved ? 'remover dos salvos' : 'Salvo',
+      ),
+      onTap: () {
+        setState(() {
+          if (alreadySaved) {
+            _saved.remove(pair);
+          } else {
+            _saved.add(pair);
+          }
+        });
+      },
+    );
   }
 }
